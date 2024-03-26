@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>Cartographie avancée avec QGIS</title>
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./dist/reset.css" />
+    <link rel="stylesheet" href="./dist/reveal.css" />
+    <link rel="stylesheet" href="./dist/theme/black.css" id="theme" />
+    <link rel="stylesheet" href="./css/highlight/base16/zenburn.css" />
+
+    <link rel="stylesheet" href="./css/oslandia.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown data-separator="\r?\n---\r?\n" data-separator-vertical="\r?\n----\r?\n">
+          <textarea data-template>
+            
+
+<style>
+img {
+margin:0 !important;
+vertical-align:top !important;
+}
+table td {
+border-bottom: 0 !important;
+padding-left: 0 !important;
+vertical-align:top !important;
+}
+</style>
+
+## Cartographie avancée avec QGIS
+
+Rencontres des Utilisateurs Francophones de QGIS<br/>
+Grenoble - 27/03/2024
+</td><td><img src="rencontres_header.png" box-shadow="none"></img></td>
+
+Julien Cabieces / Jacky Volpes
+
+<img src="oslandia_logo_164x164.png" height="150" />
+
+---
+
+### Qui sommes nous ?
+
+<table vertical-align="middle">
+<tr><td><img text-align="center" src="juc_rond.png" height="250" /></td>
+<td>
+Julien Cabieces<br/>
+Developpeur C++/Python<br/>
+QGIS Core committer<br/>
+<img text-align="center" src="github_logo.svg" height="32" width="32"/><em>@troopa81</em><br/>
+<img text-align="center" src="twitter_logo.svg" height="32" width="32"/><em>@CabiecesJ</em><br/>
+<img text-align="center" src="mastodon_logo.svg" height="32" width="32"/><em>@CabiecesJ@mapstodon.space</em>
+</td>
+</tr>
+</table>
+
+<table vertical-align="middle">
+<tr>
+<td>
+Jacky Volpes<br/>
+Developpeur C++/Python<br/>
+Contributeur cœur QGIS & Plugins<br/>
+<img text-align="center" src="github_logo.svg" height="32" width="32"/><em>@Djedouas</em><br/>
+<img text-align="center" src="mastodon_logo.svg" height="32" width="32"/><em>@djedouas@mamot.fr</em>
+</ul>
+</td>
+<td><img text-align="center" src="jvo_rond.png" height="250" /></td>
+</tr>
+</table>
+
+---
+
+## Plan de l'atelier
+
+- ✏️ Rendu catégorie, dégradé, ensemble de règles *(30')*
+- 🎭 Les masques sélectifs *(30')*
+- 📐 Générateur de géométrie *(45')*
+- ⏱️ La dimension temporelle *(30')*
+- 🗎 Mises en pages et rapport *(45')*
+
+
+*On ne parlera pas de la symbologie des raster* 😢
+
+---
+
+## Rendu par catégorie, gradué, règles
+
+---
+
+#### Chargez la donnée: Les bâtiments de Grenoble
+
+
+- Téléchargez la [donnée](batiments_grenoble.gpkg)
+- Extrait de la [base de données nationale des bâtiments](https://bdnb.io/download/)
+  - *Seulement quelques champs ont été sélectionnés*
+
+---
+
+#### Rendu catégorisé
+
+<img src="cat_configcat.png" />
+
+---
+
+#### Rendu gradué
+
+- Sélectionnez le style *"classe énergétique"*
+- Étudiez la symbologie
+
+---
+
+#### Rendu par règle (Exercice)
+
+- On veut la classe énergétique
+- **ET** des hachures si c'est du *Résidentiel collectif*
+
+---
+
+#### Rendu par règle (Réponse)
+
+<img src="cat_rules.png" />
+
+ AND "ffo_bat_usage_niveau_1_txt" = 'Résidentiel collectif'
+
+---
+
+## Les masques sélectifs
+
+<img height="500" src="bobsm_nonmasked.jpg" />
+
+---
+
+### Selective masking Kezako ?
+
+![](leo.png)
+
+---
+
+<img height="500" src="bobsm_nonmasked.jpg" />
+
+---
+
+<img height="500" src="bobsm.jpg" />
+
+
+*Ce trucage a été réalisé par des professionnels ... sans QGIS*
+
+---
+
+<img height="500" src="layout_export.png" />
+
+- 1 symbole d'une couche masque 1 autre symbole d'une couche
+- On peut avoir plusieurs masques
+- **Ceci n'est pas un buffer**
+
+---
+
+### Prérequis
+
+- Téléchargez le fichier [selective_masking.gpkg](selective_masking.gpkg)
+- Glissez-Déposez dans QGIS
+- Sélectionner le projet "selective_masking"
+
+<img height="300" src="smask_nomask.png" />
+
+---
+
+### 1er exercice
+
+Les étiquettes des polygones doivent masquer la partie noire des lignes
+
+---
+
+#### 1. Configuration du masque
+
+<img height="500" src="smask_labelconfig.png" />
+
+---
+
+#### 2. Configuration de ce qui est masqué
+
+<img height="500" src="smask_masquageconfig.png" />
+
+---
+
+#### Résultat
+
+<img height="400" src="smask_result1.png" />
+
+---
+
+### 2ème exercice
+
+Le symbole *Jet* doit masquer la partie noire des lignes
+
+---
+
+#### 1. Configuration du masque
+
+<!-- TODO arriver à mettre cette foutu fleche au milieu, le style du haut bloque -->
+
+<table >
+<tr><td>
+<img height="500" src="smask_symbol_wo_mask.png" /></t>
+
+<td vertical-align="middle !important">➡️</td>
+
+<td><img height="500" src="smask_symbol.png" /></td>
+</tr>
+</table>
+
+---
+
+#### 2. Configuration de ce qui est masqué
+
+<img height="500" src="smask_masquageconfig2.png" />
+
+---
+
+#### Résultat
+
+<img height="400" src="smask_result2.png" />
+
+---
+
+#### Modifiez le symbole de masquage
+
+- Aggrandissez sa taille
+- Zoomez/Dézoomez
+- Qu'observez vous ?
+
+---
+
+#### Le masquage a été supprimé 😱
+
+- Un nouveau symbole a été créé lors du changement
+- Le lien de masquage avec l'ancien symbole est cassé
+
+---
+
+#### Export PDF
+
+- *Projet* > *Importer/Exporter* > *Exporter la carte au format PDF*
+- La carte est au format vecteur
+  - Sauf si vous cochez *Transformer la carte en raster*
+- Exportez avec et sans masques
+- Qu'observez vous ?
+
+---
+
+#### Export PDF
+
+<img src="smask_export_size.png" />
+
+- l'export avec masque est 10% plus gros...dans cet exemple
+- Plus y a de feature qui masque/masquée, plus le fichier sera gros
+- voire **TRÉS** gros (Go...)
+- et des fois, ça [crashe](https://github.com/qgis/QGIS/issues/50543)
+
+---
+
+#### Fonctionnel...
+
+...mais a quelques faiblesses/fragilités/limitations:
+- Lien de masquage cassé dés qu'on modifie le masque/masqué
+- Pas d'avertissement quand un lien de masquage est cassé
+- Export peut [crasher](https://github.com/qgis/QGIS/issues/50543) si beaucoup d'éléments
+- Export vectoriel génère des énormes fichiers
+- Ne fonctionne pas avec du SVG (limitation Qt)
+
+Cela pourrait être grandement amélioré 💸
+
+---
+
+## Le générateur de géométrie
+
+---
+
+### Pour quoi ?
+
+- Créer des symboles sur-mesure
+- Placer des étiquettes à des endroits particuliers
+- Révéler votre créativité
+
+![](joy_division.png)
+
+[Article Geotribu : Réaliser une carte comme la couverture de l'album Unknow Pleasures de Joy Division](https://geotribu.fr/articles/2022/2022-07-11_qgis_joy_division/)
+
+---
+
+### Exemples (1/5) : point de mesure
+
+![](generateur_geom_exemple_1.png)
+
+---
+
+### Exemples (2/5) : zone réservée
+
+![](generateur_geom_exemple_2.png)
+
+---
+
+### Exemples (3/5) : zone réservée
+
+![](generateur_geom_exemple_3.png)
+
+---
+
+### Exemples (4/5) : zone de couverture
+
+![](generateur_geom_exemple_4.png)
+
+---
+
+### Exemples (5/5) : passages piétons
+
+![](generateur_geom_exemple_5.png)
+
+---
+
+### TP : jeu de données
+
+[Télécharger le géopackage](ws_gre.gpkg)
+
+- Couche de points : points de mesures
+- Couche de points : caméras avec orientation et angle de vue
+- Couche de lignes : zones de stationnement
+- Couche de lignes : passages piétons
+- Couche de polygones : Routes
+
+---
+
+### Par où démarrer ?
+
+Dans la section **Symbologie** des paramètres de couche.
+
+- Choisir **Générateur de géométrie** comme type de symbole.
+- Choisir le type de géométrie ([Multi] Point/Polyligne/Polygone)
+- Lancer le constructeur d'expressions.
+
+![](generateur_geom_step_1.png)
+
+---
+
+### Interagir avec une autre couche (1/3)
+
+`overlay_nearest` permet de récupérer les entités d'une autre couche les plus proches d'une géométrie donnée.
+
+Sur la couche points **mesures**, entrer cette expression comme géométrie générée
+
+```
+shortest_line(
+  $geometry,
+  overlay_nearest('routes', $geometry, limit:=1, max_distance:=50)[0]
+)
+```
+
+On crée la ligne entre notre point et la première entité la plus proche de la couche **routes**.
+
+![](generateur_geom_step_2.png)
+
+---
+
+### Symoble type "section"
+
+On agrandit cette ligne sur 20 mètres, et on garde l'intersection avec l'entité la plus proche de la couche **routes**.
+
+```
+intersection(
+  extend(
+    shortest_line(
+      $geometry,
+      overlay_nearest('routes', $geometry, limit:=1, max_distance:=50)[0]
+    ),
+    0,  -- pas d'extension côté début
+    20  -- 20m d'extension côté fin
+  ),
+  overlay_nearest('routes', $geometry, limit:=1, max_distance:=50)[0]
+)
+```
+
+![](generateur_geom_step_3.png)
+
+---
+
+### Un peu de détail
+
+On peut étendre un peu ce symbole de part et d'autre pour donner un aspect "mesure de section".
+
+```
+extend(
+  intersection(
+    extend(
+      shortest_line(
+        $geometry,
+        overlay_nearest('routes', $geometry, limit:=1, max_distance:=50)[0]
+      ),
+      0,  -- pas d'extension côté début
+      20  -- 20m d'extension côté fin
+    ),
+    overlay_nearest('routes', $geometry, limit:=1, max_distance:=50)[0]
+  ),
+  1,  -- 1m d'extension côté début
+  1,  -- 1m d'extension côté fin
+)
+```
+
+![](generateur_geom_step_4.png)
+
+---
+
+### Les variables
+
+On évite de répéter des calculs, et la duplication de code.
+
+Création d'une variable utilisable ensuite avec **@**.
+
+```
+-- Définition des variables
+with_variable(
+  'nearest_poly',
+  overlay_nearest('routes', $geometry, limit:=1, max_distance:=50)[0],
+
+-- Code principal
+extend(
+  intersection(
+    extend(shortest_line($geometry, @nearest_poly), 0, 20),
+    @nearest_poly
+  ),
+  1,
+  1
+)
+
+)
+```
+
+---
+
+### Attention
+
+La géométrie n'est pas là où le symbole apparaît.
+
+![](generateur_geom_step_5.png)
+
+On peut ajouter un niveau de symbole avec la géométrie réelle si besoin.
+
+![](generateur_geom_step_6.png)
+![](generateur_geom_step_7.png)
+
+---
+
+### Symbole de zone de stationnement
+
+On veut seulement dessiner une ligne le long du trottoir où la zone va être placée par le générateur de géométrie.
+
+![](generateur_geom_step_8.png)
+
+---
+
+### Single sided buffer
+
+Zone de 1.50 m de large sur la route :
+
+```
+single_sided_buffer($geometry, 1.5, join:=2)
+```
+
+![](generateur_geom_step_9.png)
+
+---
+
+### Pour décaler un peu la zone
+
+Pour décaler le rectangle, on pourrait utiliser la fonction `translate` mais il faut jouer avec la trigonométrie pour trouver les bons delta X et Y.
+
+Une astuce est d'utiliser la différence entre un rectangle plus grand, et un rectangle plus petit.
+
+Pour décaler de 20 cm du bord du trottoir :
+
+![](generateur_geom_step_10.png)
+
+---
+
+### Solution possible
+
+```
+with_variable('decalage', 0.2,
+
+difference(
+  single_sided_buffer($geometry, 1.5 + @decalage, join:=2),
+  buffer($geometry, @decalage, cap:='square', join:='miter')
+)
+
+)
+```
+
+---
+
+### Stationnement de bus
+
+Créer une ligne qui zigue-zague entre 2 côtés de 2 "single_sided_buffer" :
+
+![](generateur_geom_step_11.png)
+
+---
+
+### Préparation
+
+Nous aurons besoin de plusieurs variables dans notre expression :
+- **rect1** et **rect2** (petit et grand single_sided_buffer)
+- **l1** et **l2** (ligne de base et haute du symbole)
+
+![](generateur_geom_step_12.png)
+
+---
+
+### Fonctions utiles
+
+On va chercher à placer des points le long des lignes l1 et l2 : voir `line_interpolate_point`.
+
+Pour être compatible avec des lignes de plusieurs segments, combiner `array_foreach` et `geometries_to_array` et `collect_geometries`.
+
+![](generateur_geom_step_13.png)
+
+---
+
+### Passages piétons
+
+2 symboles générateurs de géométries :
+- un multipolygone de rectangles blancs le long de la ligne
+- un rectangle de fond gris le long de la ligne
+
+![](generateur_geom_step_14.png)
+
+---
+
+## La dimension temporelle
+
+---
+
+### Récupérez la donnée
+
+
+- Téléchargez [Les arbres de Grenoble](arbres_grenoble.gpkg)
+  - Donnée d'[origine](https://data.metropolegrenoble.fr/visualisation/export/?id=arbres-grenoble&disjunctive.sous_categorie_desc&disjunctive.espece&location=12,45.18821,5.74699) 
+  - récupérée/modifée sur le [portail](https://data.metropolegrenoble.fr/) de la métropôle de Grenoble
+- Ouvrir le projet
+
+---
+
+### Problème: Pas de date
+
+<img height="400" src="time_virtualfield.png" />
+
+- timestamp / begin / end sont NULL
+- Création d'une date à partir d'*anneedeplantation*
+
+
+---
+
+### Configuration temporelle
+
+<img height="400" src="time_config.png" />
+
+- Activez le *Panneau Contrôleur temporel*
+  - Clic droit sur la boîte à outil
+- Réglez la *Plage d'animation* et le *Pas*
+- *Play*
+
+---
+
+### Configuration temporelle
+
+<img height="400" src="time_view.png" />
+
+- Flickering désagréable à chaque *pas* 🤢
+
+---
+
+### Rendu Heatmap
+
+<img  src="time_configheatmap.png" />
+
+- 1. Opacité sur les premiers stops (0%, 50%)
+- 2. Si *Automatique* : Rendu non constant, adaptatif en fonction du min/max 
+- 2. Fixe (400 pas mal): 
+  - Si trop **bas**, saturation zones de fortes densité 
+  - Si trop **haut**, zones de faible densité disparaissent 
+- 3. *Plus rapide* quand on manipule
+
+
+---
+
+#### Décorations
+
+<img  src="time_titre.png" />
+
+---
+
+
+### Créer un GIF (1/2)
+
+<img height="400" src="time_export.png" />
+
+- Export une liste d'image
+- **D'abord** la largeur en pixel, puis la couche (dessin sur le canvas)
+
+---
+
+### Créer un GIF (2/2)
+
+- Générer le GIF
+  - En ligne [Ezgif](https://ezgif.com/maker)
+  - Avec  [GIMP](https://www.birdseyeviewgis.com/blog/2020/8/14/creating-a-covid-19-temporal-animation-with-qgis)
+  - Sous Windows avec l'application d'édition vidéo intégré
+
+![GIF généré](time.gif)
+
+---
+
+### Quelques liens utiles
+
+- *[Geogiffery](https://www.gispo.fi/en/blog/geogiffery-in-2020-with-qgis-temporal-controller/) in 2020 with QGIS temporal controler* par **GISPO** 
+- *[Creating a COVID-19 Temporal Animation](https://www.birdseyeviewgis.com/blog/2020/8/14/creating-a-covid-19-temporal-animation-with-qgis) with QGIS* par **Kurt Menke**
+- *[Animating Time Series Data](https://www.qgistutorials.com/en/docs/3/animating_time_series.html) in QGIS 3* par **Ujaval Gandhi (spatialthoughts)**
+
+---
+
+## Mises en pages et rapport
+
+---
+
+### Avoir une page d'atlas pour chaque zone principale.
+
+Chaque page aura autant de carte que de zones secondaires.
+
+Charger les couches atlas zones principales et secondaires :
+
+![](atlas_zones_step_1.png)
+
+---
+
+### Résultat désiré
+
+![](atlas_zones_step_2.png)
+
+Des idées ?
+
+---
+
+### Lien entre zones principale et secondaires
+
+Ajouter un champ virtuel dans la table des zones secondaires pour savoir à quelle zone principale elle appartient.
+
+Voir la fonction `overlay_within`.
+
+![](atlas_zones_step_3.png)
+
+---
+
+### L'atlas
+
+Comme nous avons une page par zone principale, c'est notre couche de couverture.
+
+Le nom de la page sera le champ "nom".
+
+Créer une première carte pour la zone secondaire 1, définir les expressions pour l'emprise
+- min X, min Y
+- max X, max Y
+
+Voir la fonction `get_feature`.
+
+*Astuce* : pour prévoir les cartes des autres zones secondaires, utiliser les variables de l'objet pour le numéro de zone.
+
+---
+
+### L'opacité
+
+S'il n'y a pas de zone du numéro concerné, il faut que la carte n'apparaisse pas sur la page.
+
+Écrire une expression adaptée pour l'opacité de la carte dans la section *Rendu*.
+
+![](atlas_zones_step_4.png)
+
+---
+
+### Le style de couche comme filtrage
+
+Pour ne pas voir apparaître les autres zones secondaires dans une carte, utiliser une symbologie **ensemble de règles**
+avec une règle de filtrage utilisant les variables `@atlas_page_name` et celle du numéro de zone secondaire.
+
+Avant ![](atlas_zones_step_5.png)
+
+
+Après ![](atlas_zones_step_6.png)
+
+---
+
+### Atlas temporel
+
+Avec le projet des arbres de Grenoble, créer une mise en page, et configurer l'atlas.
+
+Une page correspondra à un intervalle de temps (voir la couche `intervalles` qui sera utilisée comme couche de couverture).
+
+Dans les propriétés de la carte ajoutée à la mise en page, cocher **Plage temporelle** et définir les expressions adéquates.
+
+Voir la fonction `attribute`.
+
+---
+
+### Aperçu
+
+![](atlas_arbres.png)
+
+---
+
+# Questions 
+
+Rencontres des Utilisateurs Francophones de QGIS<br/>
+Grenoble - 27/03/2023
+</td><td><img src="rencontres_header.png" box-shadow="none"></img></td>
+
+Julien Cabieces / Jacky Volpes
+
+<img height=150px src="oslandia_logo_164x164.png">
+
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="./dist/reveal.js"></script>
+
+    <script src="./mermaid/dist/mermaid.min.js"></script>
+
+    <script src="./plugin/markdown/markdown.js"></script>
+    <script src="./plugin/highlight/highlight.js"></script>
+    <script src="./plugin/zoom/zoom.js"></script>
+    <script src="./plugin/notes/notes.js"></script>
+    <script src="./plugin/math/math.js"></script>
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        slideNumber: true,
+        highlight: {
+          highlightOnLoad: false
+        },
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath
+        ]
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"_":["."],"css":"./oslandia.css","static":"/tmp/ws_carto_avancee"}, queryOptions);
+    </script>
+
+
+    <script>
+      Reveal.initialize(options);
+      Reveal.addEventListener('ready', function (event) {
+        const blocks = Reveal.getRevealElement().querySelectorAll('pre code:not(.mermaid)');
+        const hlp = Reveal.getPlugin('highlight');
+        blocks.forEach(hlp.highlightBlock);
+      });
+    </script>
+
+    <script>
+      const mermaidOptions = extend({ startOnLoad: false }, {});
+      mermaid.startOnLoad = false;
+      mermaid.initialize(mermaidOptions);
+      const cb = function (event) { mermaid.init(mermaidOptions, '.stack.present>.present pre code.mermaid'); };
+      Reveal.addEventListener('ready', cb);
+      Reveal.addEventListener('slidetransitionend', cb);
+    </script>
+  </body>
+</html>
