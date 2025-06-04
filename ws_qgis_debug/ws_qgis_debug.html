@@ -40,11 +40,9 @@ Avignon - 10/06/2025
 
 Julien Cabieces / Jacky Volpes 
 
-<img src="oslandia_logo_164x164.png" height="150" />
-
 ---
 
-### Qui sommes nous ?
+### Qui sommes-nous ?
 
 <table vertical-align="middle">
 <tr>
@@ -64,7 +62,7 @@ QGIS Core committer<br/>
 <td>
 Jacky Volpes<br/>
 Developpeur C++/Python<br/>
-Contributeur coeur QGIS & Plugins<br/>
+Contributeur cœur QGIS & Plugins<br/>
 <img text-align="center" src="github_logo.svg" height="32" width="32"/><em>@Djedouas</em><br/>
 <img text-align="center" src="mastodon_logo.svg" height="32" width="32"/><em>@djedouas@mamot.fr</em>
 </ul>
@@ -78,7 +76,9 @@ Contributeur coeur QGIS & Plugins<br/>
 
 ## Plan de l'atelier
 
-Débugger des projets
+- Prérequis
+- Récupération des données
+- Débugger des projets
 
 ---
 
@@ -88,12 +88,12 @@ Débugger des projets
 
 ```shell
 $ createdb ws_qgis_debug
-$ pg_dump -d ws_qgis_debug -f ws_qgis_debug.sql
+$ psql -d ws_qgis_debug -f ws_qgis_debug.sql
 ```
 
-- Configurer votre fichier [.pg_service.conf](https://docs.qgis.org/3.40/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file) avec le nom *[ws_qgis_debug]*
+- Configurer votre fichier [.pg_service.conf](https://www.postgresql.org/docs/current/libpq-pgservice.html) avec le nom *[ws_qgis_debug]*
 
-**Puis ...** (flèche de droit pour la slide suivante)
+**Puis ...** (flèche de droite pour la slide suivante)
 
 ---
 
@@ -102,14 +102,12 @@ $ pg_dump -d ws_qgis_debug -f ws_qgis_debug.sql
 
 <img src="connexion.png" />
 
-- Ouvrir le projet [communes](communes/communes.qgz)
-
 ---
 
 ## Origine des données
 
 - Communes téléchargées [ici](https://www.data.gouv.fr/fr/datasets/decoupage-administratif-communal-francais-issu-d-openstreetmap/)
-- 🇫🇮 [GISPO](https://www.gispo.fi/en/) [performance test](https://github.com/GispoCoding/qgis-postgis-performance-test)
+- 🇫🇮 [GISPO](https://www.gispo.fi/en/) [performance test sur les expressions](https://github.com/GispoCoding/qgis-postgis-performance-test?tab=readme-ov-file#to-reproduce-the-issue)
 
 ---
 
@@ -126,7 +124,7 @@ $ ogr2ogr -f "PostgreSQL" PG:"host=127.0.0.1 user=julien dbname=ws_qgis_debug" \
 	/home/julien/Téléchargements/communes-20220101-shp/communes-20220101.shp \
 	-nlt MULTIPOLYGON
 ```
-Communes cotières
+Communes côtières
 
 ```sql
   create view communes_cotieres as
@@ -138,21 +136,18 @@ Communes cotières
 					   AND ic.ogc_fid != c.ogc_fid )));
 ```
 
-Pour la thématique sur les [expressions](https://github.com/GispoCoding/qgis-postgis-performance-test?tab=readme-ov-file#to-reproduce-the-issue)
-
-
 ---
 
 ## Communes
 
 ---
 
-### Communes: Identifier la requête
+### Communes : Identifier la requête
 
 - Ouvrir le projet [communes](communes/communes.qgz)
-- Zoomer sur une région (exemple: Occitanie)
+- Zoomer sur une région (exemple : Occitanie)
 - Clic droit barre d'outils
-  - ➡️ *Panneaux* ➡️ *Outils de debogage et développement*
+  - ➡️ *Panneaux* ➡️ *Outils de débogage/développement*
 - Onglet *Enregistreur de requêtes* <img style="vertical-align:middle !important"  src="dbmanager.svg"  />
 - Effacer le journal <img style="vertical-align:middle !important"  src="mActionDeleteSelected.svg"  />
 - Activer l'enregistrement <img style="vertical-align:middle !important"  src="mActionRecord.svg"  />
@@ -160,13 +155,13 @@ Pour la thématique sur les [expressions](https://github.com/GispoCoding/qgis-po
 
 ---
 
-### Communes: Identifier la requête
+### Communes : Identifier la requête
 
 <img src="communes/debug.png" />
 
 ---
 
-### Communes: Requêtes en 2 étapes
+### Communes : Requêtes en 2 étapes
 
 Déclaration du curseur
 
@@ -184,12 +179,12 @@ Seule la 2ème a une latence, mais nous sommes intéressés par la 1ère 🤔
 
 ---
 
-### Communes: Débugger la requête
+### Communes : Débugger la requête
 
 - Clic droit sur la déclaration du curseur ➡️ Copier le SQL
 - Ouvrir une console **psql**
 - Remplacer 
-  - **BEGIN READ ONLY;DECLARE qgis_422 BINARY CURSOR FOR** 
+  - **BEGIN READ ONLY;DECLARE qgis_422 BINARY CURSOR FOR**
   - par
   - **EXPLAIN ANALYZE**
 - Exécuter
@@ -199,7 +194,7 @@ EXPLAIN ANALYZE SELECT st_asbinary("wkb_geometry",'NDR'),"ogc_fid" FROM "public"
 ```
 ---
 
-### Communes: EXPLAIN
+### Communes : EXPLAIN
 
 ```
            QUERY PLAN                                                                                                                 
@@ -213,9 +208,9 @@ EXPLAIN ANALYZE SELECT st_asbinary("wkb_geometry",'NDR'),"ogc_fid" FROM "public"
 
 ---
 
-### [Solution] Communes: Seq Scan
+### [Solution] Communes : Seq Scan
 
-- Scan séquentiel: A chaque requête
+- Scan séquentiel : à chaque requête
   - Postgres lit Toute la table
   - filtre les géométries 1 par 1 😱
 
@@ -223,17 +218,17 @@ EXPLAIN ANALYZE SELECT st_asbinary("wkb_geometry",'NDR'),"ogc_fid" FROM "public"
 
 ---
 
-### Aparté: les index
+### Aparté : les index
 
 - Index spatiaux ➡️ extension du principe d'index
-- Différents types: b-tree, **GiST**, SP-GiST, BRIN
-- GiST: Arbre de Bounding BOX pour un accés rapide
+- Différents types : b-tree, **GiST**, SP-GiST, BRIN
+- GiST: Arbre de Bounding Box pour un accès rapide
 
 <img src="communes/index_principe2.png" height="500" />
 
 ---
 
-### Communes: On ajoute un index
+### Communes : On ajoute un index
 
 ```sql
 CREATE INDEX communes_gist_idx ON communes_20220101 USING GIST ( wkb_geometry );
@@ -252,23 +247,23 @@ on relance le EXPLAIN
 
 ---
 
-### Communes: Avant / Aprés
+### Communes : Avant / Après
 
 <img src="communes/debug_after.png" height="500" />
 
-⚠️ La récupération de la donnée (géométrie notamment) prends aussi du temps
+⚠️ La récupération de la donnée (géométrie notamment) prend aussi du temps
 
 ---
 
-### Communes: BONUS
+### Communes : BONUS
 
-Dézoomer au niveau de la france et analysez la requête
+Dézoomer au niveau de la France et analyser la requête
 
-Expliquez ce que vous voyez
+Expliquer ce que vous voyez
 
 ---
 
-### [Solution] Communes: BONUS
+### [Solution] Communes : BONUS
 
 
 ```sql
@@ -295,7 +290,7 @@ Expliquez ce que vous voyez
 ###  Communes "Saint"
 
 - Ouvrir le projet [communes_saints](communes_saints/communes_saints.qgz)
-- Appliquer la méthode décrite précédemment pour optimiser
+- Appliquer la même méthode de débogage pour chercher à optimiser
 
 ---
 
@@ -307,49 +302,49 @@ Créer un index sur le nom
 create index communes_nom_idx on communes_20220101 (nom text_pattern_ops);
 ```
 
-- Ne fonctionne pas si on veut les communes qui **contiennent** "Saint". 
+- Ne fonctionne pas si on veut les communes qui **contiennent** "Saint" (`nom like '%Saint%'`).
 - On peut alors utiliser **pg_trgm**
 
 ```sql
 CREATE EXTENSION pg_trgm;
-create index communes_nom_pg_trm_idx on communes_20220101 using gist (nom gist_trgm_ops);
+create index communes_nom_pg_trgm_idx on communes_20220101 using gist (nom gist_trgm_ops);
 ```
 
 ---
 
-### Communes "Saint": Avant/Aprés
+### Communes "Saint" : Avant/Après
 
 <img src="communes_saints/beforeafter.png" height="500" />
 
 ---
 
-## Les communes cotières
+## Les communes côtières
 
 ---
 
-### Les communes cotières
+### Les communes côtières
 
-- Depuis *Outils de debogage et développement*
+- Depuis *Outils de débogage/développement*
   - onglet *Profileur* <img style="vertical-align:middle !important" src="cotieres/mIconStopwatch.svg" />
   - Catégorie "Projet chargé" 
-	- si absent, masquer/afficher l'outil de deboggage 🐞
+	- si absent, masquer/afficher l'outil de débogage 🐞
 
 - Ouvrir le projet [cotieres](cotieres/cotieres.qgz)
-- Qu'observez vous?
+- Qu'observez-vous ?
 - Comment améliorer ?
 
 ---
 
-### [Solution] Cotières: Identification du problème
+### [Solution] Côtières : Identification du problème
 
-- Grosse latence dés le chargement (1 minute 30)
+- Grosse latence dès le chargement (> 1 minute 30)
 - Application bloquée
 
 <img src="cotieres/loadproject.png" height="400" />
 
 ---
 
-### [Solution] Cotières: Identification du problème
+### [Solution] Côtières : Identification du problème
 
 ```sql
 SELECT count(distinct ("ogc_fid"))=count(("ogc_fid")) FROM "public"."communes_cotieres"
@@ -359,7 +354,7 @@ SELECT count(distinct ("ogc_fid"))=count(("ogc_fid")) FROM "public"."communes_co
 
 ---
 
-### [Solution] Cotières: Paramètres du chargement de couche
+### [Solution] Côtières : Paramètres du chargement de couche
 
 Ne pas vérifier l'unicité des clés
 
@@ -367,7 +362,7 @@ Ne pas vérifier l'unicité des clés
 
 ---
 
-### [Solution] Cotières: Paramètres du chargement de couche
+### [Solution] Côtières : Paramètres du chargement de couche
 
 Projet de confiance pour les sources de données
 
@@ -377,29 +372,29 @@ Projet de confiance pour les sources de données
 
 ---
 
-### [Solution] Cotières: Paramètres du chargement de couche
+### [Solution] Côtières : Paramètres du chargement de couche
 
-Utiliser la table des méta-données estimées
+Utiliser la table de métadonnées estimées
 
 <img src="cotieres/metadata.png" />
 
-⚠️ Ne fonctionne pas dans ce cas là 🐞
+⚠️ Ne fonctionne pas dans ce cas-là 🐞
 
 ---
 
-### Cotières: Chargement des couches
+### Côtières : Chargement des couches
 
 🚧 Améliorations à prévoir 🚧
-- Grouper les requêtes de méta-données pour toutes les couches
-- Meilleur configurabilité des optimisations
+- Grouper les requêtes de métadonnées pour toutes les couches
+- Meilleure configurabilité des optimisations
   - pour un projet/par couche/par connexion
-  - par optimisation (champs unique, type de géométrie, extent...)
+  - par optimisation (champs uniques, type de géométrie, étendue...)
 
 💸 On cherche des financeurs 💸
 
 ---
 
-### [Solution] Cotières: Et sinon ça rame toujours... 🚣🏻
+### [Solution] Côtières : Et sinon ça rame toujours... 🚣🏻
 
 ```sql
 CREATE MATERIALIZED VIEW cotieres_mat AS select * from communes_cotieres;
@@ -408,14 +403,14 @@ CREATE MATERIALIZED VIEW cotieres_mat AS select * from communes_cotieres;
 
 ## Expression
 
-Merci GISPO 🇫🇮 pour les données!
+Merci [GISPO](https://www.gispo.fi/en/) 🇫🇮 pour les données !
 
 ---
 
 ### Expression
 
 - Ouvrir le [projet](expression/expression.qgz)
-- Optimisez
+- Optimiser
 
 ---
 
@@ -452,7 +447,7 @@ Index sur le couple *id_contact*, *id_building*, mais pas sur *id_building* seul
 Créons l'index 
 
 ```sql
-create index bo_id_idx on gisdbtest.building_owners ( id_building )
+create index bo_id_idx on qgisdbtest.building_owners ( id_building )
 ```
 
 ```sql
@@ -466,23 +461,23 @@ EXPLAIN ANALYZE SELECT "id_contact"::text,"id_building"::text FROM "qgisdbtest".
 (4 lignes)
 ```
 
-Mieux, mais ça rame encore ...
+Mieux, mais ça rame encore...
 
 ---
 
 ### [Solution] Expression : Deuxième requête
 
 ```sql
-EXPLAIN ANALYZE FOR SELECT "id","name"::text FROM "qgisdbtest"."contact" WHERE "id"=10;
+EXPLAIN ANALYZE SELECT "id","name"::text FROM "qgisdbtest"."contact" WHERE "id"=10;
 ```
 
 - Seq scan au lieu de index scan
   - Trop peu de valeurs 
   - Index scan nécessite une lecture préalable dans l'index
-  - PostGresql préfère lire une table en Seq scan
-  - A valider en ajouter des données
+  - PostgreSQL préfère lire une table en Seq scan
+  - À valider en ajoutant des données
 
-OK, mais ça rame toujours ...
+OK, mais ça rame toujours...
 
 ---
 
@@ -491,17 +486,17 @@ OK, mais ça rame toujours ...
 - Mais qu'est-ce qui ralentit le rendu ?
 
 - 2 Méthodes
-  - On analyze la requête 
-    - "Qui a besoin de récupérer le lien entre building et le champs nom du contact
+  - On analyse la requête 
+    - "Qui a besoin de récupérer le lien entre building et le champ nom du contact ?"
   - Méthode vieille comme la nuit des temps 🦕
-    - On désactive 1 par 1 les couches/symbologie
+    - On désactive 1 par 1 les couches et symbologies
     - On isole le coupable 🕵️
 
 ---
 
 ### [Solution] Expression
 
-🚓 Le coupable est: l'expression des étiquettes du building 
+🚓 Le coupable est : l'expression des étiquettes du building 
 
 
 ```
@@ -516,18 +511,18 @@ relation_aggregate(
 	',')
 ````
 
-- Pour chaque building, QGIS lance 2 requêtes pour:
+- Pour chaque building, QGIS lance 2 requêtes pour :
   - Récupérer l'*id_contact* du *building*
   - Récupérer le nom du contact depuis l'*id_contact*
 
 - ✅ Requêtes sont courtes...
-- ❌ Mais trop nombreuses!
+- ❌ Mais trop nombreuses !
 
 ---
 
 ### [Solution] Expression
 
-Créer une view 👁️
+Créer une vue 👁️
 
 ```sql
 CREATE VIEW qgisdbtest.building_with_owners AS
@@ -540,40 +535,40 @@ GROUP BY b.id;
 
 - Ajouter la nouvelle vue
 - Copier/Coller le style
-- Éditer le champs des étiquettes
+- Éditer le champ des étiquettes
 
 Le rendu est maintenant rapide 🪄
 
 ---
 
-### Expression: BONUS
+### Expression : BONUS
 
 Pourquoi la "même" requête est exécutée plusieurs fois ?
 
 ---
 
-### [Solution] Expression: BONUS
+### [Solution] Expression : BONUS
 
 - QGIS précharge les tuiles autour de la zone de rendu
   - Utiles pour les tuiles XYZ, WMS...
   - Mais re-requête tout le temps les données de base
-	- Au cas où elle est changéé
-- Soit 9 zones en tout ➡️ 9 requêtes
+	- Au cas où elle ait changé
+- Soit 9 zones en tout : 9 requêtes
 
 <img src="expression/preload.png" height="300" />
 
 ---
 
-## COG: Cloud Optimized Geotiff
+## COG : Cloud Optimized Geotiff
 
 ---
 
-### COG: Accés distant raster
+### COG : Accès distant raster
 
-C'est [impossible](https://github.com/qgis/QGIS/issues/53351) pour l'instant 😭
+C'est [impossible à débugger](https://github.com/qgis/QGIS/issues/53351) pour l'instant 😭
 
 - Attention à la précision des données
-  - Exemple: Sentinel en UInt16 pour afficher en RGB (8 bits)
+  - Exemple : Sentinel en UInt16 pour afficher en RGB (8 bits)
 	Récupère 2 x trop de données
 
 ---
@@ -584,8 +579,8 @@ C'est [impossible](https://github.com/qgis/QGIS/issues/53351) pour l'instant �
 
 ### OpenStreetMap 🗺️
 
-- Depuis l'explorateur, noeud *Tuiles XYZ*, ajouter OpenStreetmap
-- Depuis *Outils de debogage et développement*
+- Depuis l'explorateur, nœud *Tuiles XYZ*, ajouter OpenStreetMap
+- Depuis *Outils de débogage/développement*
   - onglet *Journal de bord du réseau* <img style="vertical-align:middle !important" src="network_and_proxy.svg" />
 - Se déplacer
 
