@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>Security for QGIS Memory safety</title>
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./dist/reset.css" />
+    <link rel="stylesheet" href="./dist/reveal.css" />
+    <link rel="stylesheet" href="./dist/theme/black.css" id="theme" />
+    <link rel="stylesheet" href="./css/highlight/base16/zenburn.css" />
+
+    <link rel="stylesheet" href="./css/oslandia.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown data-separator="\r?\n---\r?\n" data-separator-vertical="\r?\n----\r?\n">
+          <textarea data-template>
+            
+
+<style>
+img {
+margin:0 !important;
+vertical-align:top !important;
+}
+table td {
+border-bottom: 0 !important;
+padding-left: 0 !important;
+vertical-align:top !important;
+}
+</style>
+
+## Security for QGIS : Memory safety
+
+Corpo #35 : Canopée<br/>
+Arjuzanx / Landes - 16/06/2025
+
+Julien Cabieces
+
+---
+
+## Une présentation didactique
+
+
+![](fred_et_jami.jpg)
+
+... enfin j'espère (c'est un test!)
+
+---
+
+## Plan
+
+- Qu'est ce que le projet Security for QGIS ?
+- Quel est le problème de la memory safety ?
+- Comment le résoudre ?
+- Comment migrer la base de code QGIS ?
+  - Clang Tooling
+
+---
+
+### Security for QGIS : 💵 Financement 💵
+
+- Financement mutualisé
+  - Orange
+  - SNCF réseau
+  - Grenoble
+  - ... (parlez en autour de vous)
+
+![](pledge.png)
+
+---
+
+### Security for QGIS : 9 Workpackages
+
+1. Builds reproducibility and Build Systems
+2. Binary and Docker Image Signing
+3. Code Analysis and Dependency Management
+4. External Security Audit and Global Analysis
+5. GitHub Processes and Contribution Management
+6. Plugin Security
+7. Artifact Security Analysis
+8. Security Training, Documentation, and Visibility
+9. Improve Memory Safety 📍**Vous êtes ici**
+
+---
+
+### Memory Safety c'est quoi le problème ?
+
+[NSA](https://www.nsa.gov/Press-Room/News-Highlights/Article/Article/3215760/nsa-releases-guidance-on-how-to-protect-against-software-memory-safety-issues/), Novembre 2022
+
+> Microsoft and Google have each stated that software **memory safety issues are behind around 70 percent of their vulnerabilities**. Poor memory management **can lead to technical issues as well**, such as incorrect program results, degradation of the program’s performance over time, and program crashes.
+
+---
+
+> **NSA recommends that organizations use memory safe languages** when possible and bolster protection through **code-hardening** defenses such as compiler options, tool options, and operating system configurations.
+
+---
+
+- Memory safe language
+  - Avec "interpreter" 🐢 : Java, Python, TypeScript 
+  - Sans: Rust
+
+---
+
+### Memory Safety c'est quoi le problème ?
+#### Attention, vous allez voir du C++ 😱
+
+---
+
+### Allouer de la mémoire
+
+```c++
+class MaClasse
+{
+   int i = 0;
+};
+
+MaClasse *monObject = new MaClasse();
+```
+
+<img src="memoire.png" height="200" />
+
+pointeur = adresse !
+
+
+---
+
+### La libérer, ~délivrer~ ❄️
+
+```c++
+delete monObject; // détruire l'espace mémoire alloué
+monObject = nullptr; // effacer l'adresse
+```
+
+<img src="liberer.jpg" height="200" />
+
+---
+
+### Et si on oubli...
+
+- delete
+  - fuites mémoire 💧 (memory leak)
+  - Application grossit en mémoire
+- = nullptr (dangling pointer)
+  - Accés à un segment mémoire détruit: CRASH 💥 
+  
+---
+
+### Quel rapport avec la sécurité ?
+
+![](hackerman.jpg)
+
+---
+
+### Manuel du petit hacker 📖
+
+⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ ULTRA SIMPLIFICATION  ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
+
+- Je combine:
+  - un oubli de **delete** pour "laisser" un objet
+  - un oubli de **=nullptr** pour utiliser un objet "laissé"
+
+- Et donc je pointe sur un objet non prévu initialement
+- exemple: un objet d'authentification
+
+⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ ULTRA SIMPLIFICATION  ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
+
+---
+
+### Manuel du petit hacker 📖
+
+On combine aussi avec les out-of-bound access
+
+---
+
+### Comment on corrige
+
+```c++
+// MaClasse *monObject = new MaClasse();
+std::unique_ptr<MaClasse> monObject = std::make_unique<MaClasse>();
+
+// delete monObject;
+// monObject = nullptr;
+monObject.reset();
+```
+
+On remplace 2 instructions par 1 seule!!!
+
+---
+
+### Pourquoi on l'a pas fait avant ?
+
+- QGIS a 20 ans
+  - smart pointer: C++11 (2012)
+- État d'esprit : Get Good! "Merci de ne pas oublier"
+- Rust a popularisé la mode
+  - On explicite TOUT
+  
+---
+
+### Pourquoi ne pas tout ré-écrire en Rust
+
+- QGIS 1,5 Millons de code C++ à réécrire
+- Les dépendances à binder 🤮 /re-écrire
+- La mode passera, C++ continuera d'exister
+  - cf, Java, Python, Go, C#, Dart...)
+
+<img src="Isee.gif" height="300" />
+
+---
+
+### Comment on transforme le code ?
+
+![](diff5.png)
+![](diff1.png)
+![](diff2.png)
+![](diff3.png)
+![](diff4.png)
+![](diff6.png)
+![](diff7.png)
+
+Impossible de faire ça avec sed et des regexp !!
+
+---
+
+### AST: Abstract Syntaxique Tree
+
+On veut conserver la logique du code 🧠 !
+
+Le code, c'est un arbre 🌳
+
+![](treecode_final.png)
+
+---
+
+### Clang Tooling
+
+- Clang: compilateur
+- permet de définir des plugins
+- Donne accés AST
+- Permet de remplacer
+
+---
+
+### Clang query
+
+Requête sur du code (comme du SQL ou XPath)
+
+```c++
+cxxDestructorDecl(
+	isExpansionInFileMatching( "QGIS/src/core/.*" ),
+	has(compoundStmt(forEach(cxxDeleteExpr(
+				   has(implicitCastExpr(has(memberExpr(has(cxxThisExpr())).bind("member"))))
+					      ).bind("deleteExpr")
+				)))).bind("destructor");
+```
+
+Exemple: Matche tous les destructeur C++ qui contienne un delete d'une variable membre
+
+- Requête identification patterns ➡️ Remplace
+
+---
+
+### Jusqu'ici...
+
+- Concentré sur les cas "simples" (déjà bien complexe)
+- 3 PRs
+- 121 variables membres migrées
+- uniquement dans le module de core
+- Un [programme](https://git.oslandia.net/jcabieces/myconf/-/blob/0c15c16103847ea507992e171a74740101a195bd/qgis-refactor/with-libtooling/main.cpp#L12) développé pour faire la migration
+- Déjà des bugs latents détectés
+  - Constructeurs par copie par exemple
+- rends plus difficile à casser
+
+---
+
+### A venir
+
+- Finir core
+- Lancer sur les autres modules
+- Migrer l'API
+
+---
+
+## Questions
+
+Corpo #35 : Canopée<br/>
+Arjuzanx / Landes - 16/06/2025
+
+Julien Cabieces
+
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="./dist/reveal.js"></script>
+
+    <script src="./mermaid/dist/mermaid.min.js"></script>
+
+    <script src="./plugin/markdown/markdown.js"></script>
+    <script src="./plugin/highlight/highlight.js"></script>
+    <script src="./plugin/zoom/zoom.js"></script>
+    <script src="./plugin/notes/notes.js"></script>
+    <script src="./plugin/math/math.js"></script>
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        slideNumber: true,
+        highlight: {
+          highlightOnLoad: false
+        },
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath
+        ]
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"_":["."],"css":"./oslandia.css","static":"/home/julien/work/presentations/juc_security_for_qgis"}, queryOptions);
+    </script>
+
+
+    <script>
+      Reveal.initialize(options);
+      Reveal.addEventListener('ready', function (event) {
+        const blocks = Reveal.getRevealElement().querySelectorAll('pre code:not(.mermaid)');
+        const hlp = Reveal.getPlugin('highlight');
+        blocks.forEach(hlp.highlightBlock);
+      });
+    </script>
+
+    <script>
+      const mermaidOptions = extend({ startOnLoad: false }, {});
+      mermaid.startOnLoad = false;
+      mermaid.initialize(mermaidOptions);
+      const cb = function (event) { mermaid.init(mermaidOptions, '.stack.present>.present pre code.mermaid'); };
+      Reveal.addEventListener('ready', cb);
+      Reveal.addEventListener('slidetransitionend', cb);
+    </script>
+  </body>
+</html>
