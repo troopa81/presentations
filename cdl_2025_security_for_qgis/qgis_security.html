@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>The Security Project for QGIS - Présentation</title>
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./dist/reset.css" />
+    <link rel="stylesheet" href="./dist/reveal.css" />
+    <link rel="stylesheet" href="./dist/theme/black.css" id="theme" />
+    <link rel="stylesheet" href="./css/highlight/base16/zenburn.css" />
+
+    <link rel="stylesheet" href="./css/oslandia.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown data-separator="\r?\n---\r?\n" data-separator-vertical="\r?\n----\r?\n">
+          <textarea data-template>
+            
+
+<style>
+img {
+margin:0 !important;
+vertical-align:top !important;
+}
+table td {
+border-bottom: 0 !important;
+padding-left: 0 !important;
+vertical-align:top !important;
+}
+</style>
+
+
+# Security Project for QGIS
+
+![](./_assets/capitoledulibre_2025_qgis_security/qgis_security_logo.png) 
+
+---
+
+#### Qui suis-je ?
+
+<table vertical-align="middle">
+<tr>
+<td>
+Julien Cabieces<br/>
+Developpeur C++/Python<br/>
+QGIS Core committer<br/>
+<img text-align="center" src="./_assets/github.svg" height="32" width="32"/><em>@troopa81</em><br/>
+<img text-align="center" src="./_assets/mastodon.svg" height="32" width="32"/><em>@CabiecesJ@mapstodon.space</em>
+</ul>
+</td>
+<td><img text-align="center" src="./_assets/capitoledulibre_2025_qgis_security/juc_rond.png" height="250" /></td>
+</tr>
+</table>
+
+#### Oslandia
+
+- Depuis 2009
+- PME Française
+- OpenSource
+- Systèmes d'information géographiques
+- "pure player" Open Source 
+- ~25 collaborateurs
+
+---
+
+# Problématique 
+
+- Pourquoi et comment améliorer la sécurité d'un projet Open Source ?
+
+- ~~Comment utiliser QGIS en toute sécurité~~
+  - Voir [Webinaire QGIS for security](https://vimeo.com/1121914254)
+
+---
+
+# Contexte
+
+---
+
+## ![](./_assets/capitoledulibre_2025_qgis_security/context.jpg)
+
+Forte augmentation des menaces et des règlementation
+
+- *Cyber Resilience Act* (CRA - EU)
+- *Network and Information Security* directive (NIS2 - EU)  
+- *Cybersecurity and Infrastructure Security Agency* (CISA - USA)
+
+Impacts : 
+
+- ➡️ **Résilience** des systèmes
+- ➡️ **Souveraineté**
+- ➡️ **Écosystème** économique et commaunautaire
+
+Note:
+- CRA et NIS2 vont rentrer en vugueur au niveau européen
+
+
+
+---
+
+## 😱 Menaces 😱
+
+- **Ransomware** : perdez vos data, ou votre argent ?
+- **Supply chain attacks** : infection de source code, builds, infrastructure
+  - exemple: [XZ Utils](https://en.wikipedia.org/wiki/XZ_Utils_backdoor)
+- **Malware attacks** : vol de données, pénétration d'infrastructure, destruction de matériels
+- **Vulnerability exploits** : prise de contrôle de votre matériel, vos serveurs ( *be a botnet !*)
+- **Password attacks** : découverte ou brute-force des mots de passe et accès non autorisés
+
+Note:
+- Supply chain attacks: exemple NPM
+- XZ Utils: 
+  - 3 ans de contribution,
+  - Gagné les droits de commit en faisant pression sur le mainteneur en utilisant des faux comptes
+  - Poussez du code offusqué
+  - Infecté SSH et permet de prendre le controle de la machine
+  - Version de dev des distrib mais pas en production
+  - Trouvé par hasard pour des questions de perfs et d'erreur valgrind
+  - Trouvé par un dev Postgres chez Microsoft
+- Malware attacks: logiciel malveillant qui s'installent
+- Vulnérability exploits: explotation de vulnérabilité du logiciel pour prendre controle...
+- Botnets: plusieurs soft malveillant qui se regroupent pour attaquer (DDos)
+- Password attacks : social engeneering, phishing
+
+Bcp de typologie d'attaques
+
+---
+
+## 🔥 Conséquences 🔥
+
+- **Pertes financières** : pertes directs, amendes, coûts légaux, réputation…
+- **Atteinte aux données** : diffusion ou destruction de données sensibles, confidentielles, protégées
+- **Vol d'identité** : fraude financière, fraude à l'identité, vol de comptes…
+- **Interruption de services** : downtime, indisponibilité, pertes financières, arrêt d'activité, perte de confiance des clients…
+- **Impacts physiques** : e.g. domotique, accès aux systèmes SCADA…
+
+Note:
+- PF: bitcoin, asset financier ou indirect via amendes, cout avocat
+- SCADA: System industriel de pilotage a distance de pompe, machine...
+
+---
+
+## 🔍 Constats
+
+- Renforcement de la législation
+  - CRA (Cyber Resilience Act)
+  - Cybersecurity and Infrastructure Security Agency (CISA)
+  - NIS2
+- Augmentation des signalements via <security@qgis.org>
+- Coût du CRA sur l'industrie logicielle : +30%
+    - Projets OpenSource également concernés
+- Risque de blocage du déploiement de QGIS
+
+Note:
+- Bcp plus de signalement ces 2 dernières années
+- Cout moyen de cyberlocking/cryptage des données 60-90k (pas que les données cout, indirect)
+- But du CRA diminuer les risques, 
+- Impact du CRA 30% de cout logiciel en plus pour la production logicielle
+- CRA s'applique à l'OS / Il y a des spécifités
+
+---
+
+# 💪 Améliorer la sécurité de QGIS
+
+- Adaptation aux directives CRA et NIS2
+- Amélioration globale de la sécurité de QGIS et QGIS Server
+
+---
+
+## 👉 Situation actuelle
+
+- Process de sécurité QGIS trop légers 
+- Une page de score [openSSF](https://securityscorecards.dev/viewer/?uri=github.com/qgis/QGIS) ⚠️ 
+- Une équipe sécurité ( sous-dimensionnée )
+- Audits de sécurité occasionnels et partiels
+
+Note:
+- OpenSSF: outil automatique, intéressant mais pas suffisant, Bonne pratique GH
+
+---
+
+## 🔗 Composants logiciels
+
+- QGIS
+- QGIS Server
+- Bibliothèques :
+  - GDAL/OGR
+  - PROJ
+  - GEOS
+
+Et aussi en fonction des ressources :
+- QGIS Web Client
+- QField
+
+---
+
+## 🌏 Impacter l'OSGeo
+
+Approche relative aux autres projets OSGeo :
+- Améliorer le projet QGIS
+- QGIS en tant que modèle pour la sécurité
+- Répliquer l'approche sur les autres projets
+
+---
+
+## 🏗 Actions proposées
+
+---
+
+### 1. Système de build et reproductibilité des builds
+
+- Système de conversion du code source en logiciel binaire
+- Automatisé
+- Reproductibilité: 1 code source de confiance = 1 logiciel
+
+Note:
+- 36'
+
+---
+
+### 2. Signature des binaires et des images Docker
+
+- Prouver que le logiciel téléchargé est le "bon"
+
+---
+
+### 3. Analyse de code et gestion des dépendances
+
+- Comment on introduit une dépendance?
+- Suivi des vulnérabilités des dépendances
+
+---
+
+### 4. Analyse globale de sécurité et audit externe
+
+- Audit des processus
+- Audit humain du code
+
+---
+
+### 5. Processus GitHub et gestion des contributions
+
+- Qui a les droits accés ?
+- Comment on devient core-commiter ?
+- Comment on contribue quand on a pas les accés
+
+---
+
+## 6. Sécurité des plugins
+
+- 🚨 Attention aux plugins !
+- => Accès à tout l'espace utilisateur
+- Vérifications superficielles (et manuelle)
+- 🤝 *Who can you trust ?* 
+
+**Automatiser des vérifications lors de la publication du plugin**
+
+---
+
+### 7. Analyse de sécurité des artefacts
+
+- Vérification automatique des binaires
+  - exemple: Anti-virus
+
+---
+
+### 8. Formation, documentation, visibilité pour la cybersécurité
+
+- Acculturation / formation (développeurs et utilisateurs)
+- Documents de référence
+
+---
+
+### 9. Amélioration de la gestion mémoire
+
+[NSA](https://www.nsa.gov/Press-Room/News-Highlights/Article/Article/3215760/nsa-releases-guidance-on-how-to-protect-against-software-memory-safety-issues/), Novembre 2022
+
+> Microsoft and Google have each stated that software **memory safety issues are behind around 70 percent of their vulnerabilities**. Poor memory management **can lead to technical issues as well**, such as incorrect program results, degradation of the program’s performance over time, and program crashes.
+
+---
+
+> **NSA recommends that organizations use memory safe languages** when possible and bolster protection through **code-hardening** defenses such as compiler options, tool options, and operating system configurations.
+
+- 60/80% des vulnérabilités sont issus de problème de gestion mémoire
+  - out-of-bound access / use-after-free
+  - Exemple : 2014 Heartbleed dans OpenSSL
+- Rendre le code MSL (ou presque)
+
+Note:
+- C++ pas MSL de base mais en utilisant les donnes structures de controle et en ajoutant des checks, c'est possible
+
+---
+
+## 🎯 Bénéfices
+
+- Conformité CRA et contraintes SI
+- Réduction du risque sécurité
+- Amélioration de la confiance des utilisateurs
+- Processus de sécurité définis et documentés
+- Fiabilité et traçabilité améliorée
+- Meilleure intégration aux systèmes IT d'entreprise
+- Meilleur contrôle de la supply chain logicielle
+- QGIS en tant que leader sécurité et modèle OSGeo
+
+Note:
+- 40'26
+
+---
+
+## ⚠️ Risques
+
+- Résistance aux changements des contributeurs historiques
+- Gestion de la dette technique
+- Ticket d'entrée de contribution élevé
+- Manque de ressources ultérieures pour traiter les failles
+
+---
+
+### 📝 Work packages, Actions, Budget
+
+- **Work package A**: Fondations de sécurité
+  - €290,000
+- **Work package B**: Renforcement et conformité
+  - +€190,000 (Cumulé: €480,000)
+- **Work Package C**: Amélioration continue et R&D 
+  - +€170,000 (Cumulé: €650,000)
+
+---
+
+## Modalités
+
+- **Financement mutualisé**, particulièrement grands comptes
+- **Réalisation**: Par Oslandia + OPENGIS.ch + experts sécurité + communauté  
+- **Collaboration**: travail avec la communauté QGIS
+- **Financement complémentaires**: AAP européens ?
+
+---
+
+## 📆 Calendrier
+
+- Démarrage **2025**
+- Progrès en fonction des financements, WP A=>B=>C
+- **WP A**: 2025-2026
+- **WP B**: 2026
+- **CRA**: Dès 2027
+
+---
+
+## 💶 Financeurs déclarés
+
+- Orange group
+- Grenoble Métropole
+- SNCF Réseau
+- Oslandia
+- OPENGIS.ch
+- …
+
+---
+
+## Participez !
+
+🙏 Aidez le projet et participez ( >= 5K€ ) !
+
+https://security.qgis.oslandia.com
+
+![](https://pad.oslandia.net/uploads/00a9b8ec-580a-440a-8b28-b286414a8080.png)
+
+---
+
+# Questions ?
+
+qgis+security@oslandia.com
+
+          </textarea>
+        </section>
+      </div>
+    </div>
+
+    <script src="./dist/reveal.js"></script>
+
+    <script src="./mermaid/dist/mermaid.min.js"></script>
+
+    <script src="./plugin/markdown/markdown.js"></script>
+    <script src="./plugin/highlight/highlight.js"></script>
+    <script src="./plugin/zoom/zoom.js"></script>
+    <script src="./plugin/notes/notes.js"></script>
+    <script src="./plugin/math/math.js"></script>
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        slideNumber: true,
+        highlight: {
+          highlightOnLoad: false
+        },
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath
+        ]
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"_":["."],"css":"./oslandia.css","static":"/home/julien/work/presentations/cdl_2025_security_for_qgis"}, queryOptions);
+    </script>
+
+
+    <script>
+      Reveal.initialize(options);
+      Reveal.addEventListener('ready', function (event) {
+        const blocks = Reveal.getRevealElement().querySelectorAll('pre code:not(.mermaid)');
+        const hlp = Reveal.getPlugin('highlight');
+        blocks.forEach(hlp.highlightBlock);
+      });
+    </script>
+
+    <script>
+      const mermaidOptions = extend({ startOnLoad: false }, {});
+      mermaid.startOnLoad = false;
+      mermaid.initialize(mermaidOptions);
+      const cb = function (event) { mermaid.init(mermaidOptions, '.stack.present>.present pre code.mermaid'); };
+      Reveal.addEventListener('ready', cb);
+      Reveal.addEventListener('slidetransitionend', cb);
+    </script>
+  </body>
+</html>
